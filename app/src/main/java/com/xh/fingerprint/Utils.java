@@ -15,9 +15,10 @@ import java.security.KeyStoreException;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
+import javax.crypto.spec.IvParameterSpec;
 
 public class Utils {
-    private static final String KEY_NAME = "com.createchance.android.sample.fingerprint_authentication_key";
+    protected static final String KEY_NAME = "com.createchance.android.sample.fingerprint_authentication_key";
 
     // We always use this keystore on Android.
     private static final String KEYSTORE_NAME = "AndroidKeyStore";
@@ -26,7 +27,7 @@ public class Utils {
     private static final String KEY_ALGORITHM = KeyProperties.KEY_ALGORITHM_AES;
     private static final String BLOCK_MODE = KeyProperties.BLOCK_MODE_CBC;
     private static final String ENCRYPTION_PADDING = KeyProperties.ENCRYPTION_PADDING_PKCS7;
-    private static final String TRANSFORMATION = KEY_ALGORITHM + "/" +
+    protected static final String TRANSFORMATION = KEY_ALGORITHM + "/" +
             BLOCK_MODE + "/" +
             ENCRYPTION_PADDING;
     private static KeyStore mKeyStore;
@@ -62,32 +63,38 @@ public class Utils {
     }
 
     @TargetApi(Build.VERSION_CODES.M)
-    public static FingerprintManager.CryptoObject buildCryptoObject() {
-        Cipher cipher = createCipher(true);
+    public static FingerprintManager.CryptoObject buildCryptoObject(boolean encrypt, byte[] iv) {
+        Cipher cipher = createCipher(true, encrypt, iv);
         if (cipher == null)
             return null;
         return new FingerprintManager.CryptoObject(cipher);
     }
 
     @TargetApi(Build.VERSION_CODES.P)
-    public static BiometricPrompt.CryptoObject buildCryptoObject1() {
-        Cipher cipher = createCipher(true);
+    public static BiometricPrompt.CryptoObject buildCryptoObject1(boolean encrypt, byte[] iv) {
+        Cipher cipher = createCipher(true, encrypt, iv);
         if (cipher == null)
             return null;
         return new BiometricPrompt.CryptoObject(cipher);
     }
 
-    private static Cipher createCipher(boolean retry) {
+    private static Cipher createCipher(boolean retry, boolean encrypt, byte[] iv) {
         Cipher cipher = null;
         try {
             Key key = GetKey();
             cipher = Cipher.getInstance(TRANSFORMATION);
-            cipher.init(Cipher.ENCRYPT_MODE | Cipher.DECRYPT_MODE, key);
+            if (encrypt) {
+                cipher.init(Cipher.ENCRYPT_MODE, key);
+            } else {
+                cipher.init(Cipher.DECRYPT_MODE, key,new IvParameterSpec(iv));
+            }
+
         } catch (Exception e) {
+            e.printStackTrace();
             try {
                 mKeyStore.deleteEntry(KEY_NAME);
                 if (retry)
-                    createCipher(false);
+                    return createCipher(false, encrypt,iv);
             } catch (KeyStoreException keyStoreException) {
                 keyStoreException.printStackTrace();
                 return null;
@@ -96,7 +103,7 @@ public class Utils {
         return cipher;
     }
 
-    private static Key GetKey() throws Exception {
+    public static Key GetKey() throws Exception {
         Key secretKey;
         if (!mKeyStore.isKeyEntry(KEY_NAME)) {
             CreateKey();

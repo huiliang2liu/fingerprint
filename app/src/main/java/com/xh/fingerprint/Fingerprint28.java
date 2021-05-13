@@ -10,16 +10,13 @@ import android.os.CancellationSignal;
 import android.util.Log;
 
 @TargetApi(Build.VERSION_CODES.P)
-public class Fingerprint28 implements IFingerprint {
+public class Fingerprint28 extends AbsFingerprint {
     private static final String TAG = Fingerprint28.class.getSimpleName();
     private BiometricPrompt mBiometricPrompt;
     private CancellationSignal mCancellationSignal;
-    private FingerprintManager mManager;
-    private Context mContext;
 
     Fingerprint28(Context context) {
-        mContext = context;
-        mManager = (FingerprintManager) context.getSystemService(Context.FINGERPRINT_SERVICE);
+        super(context);
         if (!isHardwareDetected())
             return;
         mBiometricPrompt = new BiometricPrompt.Builder(context)
@@ -35,11 +32,6 @@ public class Fingerprint28 implements IFingerprint {
     }
 
     @Override
-    public boolean isHardwareDetected() {
-        return mManager == null ? false : mManager.isHardwareDetected();
-    }
-
-    @Override
     public void authenticate(FingerprintListener listener) {
         if (!isHardwareDetected()) {
             listener.onFailed();
@@ -52,7 +44,7 @@ public class Fingerprint28 implements IFingerprint {
                 listener.onFailed();
             }
         });
-        mBiometricPrompt.authenticate(Utils.buildCryptoObject1(), mCancellationSignal, mContext.getMainExecutor(), new BiometricPrompt.AuthenticationCallback() {
+        mBiometricPrompt.authenticate(Utils.buildCryptoObject1(encrypt(),iv()), mCancellationSignal, mContext.getMainExecutor(), new BiometricPrompt.AuthenticationCallback() {
             @Override
             public void onAuthenticationError(int errorCode, CharSequence errString) {
                 super.onAuthenticationError(errorCode, errString);
@@ -70,7 +62,8 @@ public class Fingerprint28 implements IFingerprint {
             public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
                 super.onAuthenticationSucceeded(result);
                 Log.d(TAG, "onAuthenticationSucceeded:" + result.toString());
-                listener.onSuccess();
+                authenticate(listener,result.getCryptoObject().getCipher());
+//                listener.onSuccess();
             }
 
             @Override

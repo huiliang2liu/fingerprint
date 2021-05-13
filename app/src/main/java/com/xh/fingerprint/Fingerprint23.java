@@ -7,24 +7,17 @@ import android.os.Build;
 import android.os.CancellationSignal;
 
 @TargetApi(Build.VERSION_CODES.M)
-public class Fingerprint23 implements IFingerprint {
-
-    FingerprintManager mManager;
+public class Fingerprint23 extends AbsFingerprint {
 
 
     private CancellationSignal mCancellationSignal;
 
     Fingerprint23(Context context) {
-        mManager = (FingerprintManager) context.getSystemService(Context.FINGERPRINT_SERVICE);
-        if (mManager == null)
-            return;
-        mCancellationSignal = new CancellationSignal();
+        super(context);
+        if (isHardwareDetected())
+            mCancellationSignal = new CancellationSignal();
     }
 
-    @Override
-    public boolean isHardwareDetected() {
-        return mManager == null ? false : mManager.isHardwareDetected();
-    }
 
     @Override
     public void authenticate(FingerprintListener listener) {
@@ -38,7 +31,7 @@ public class Fingerprint23 implements IFingerprint {
                 listener.onFailed();
             }
         });
-        mManager.authenticate(Utils.buildCryptoObject(), mCancellationSignal, 0, new FingerprintManager.AuthenticationCallback() {
+        mManager.authenticate(Utils.buildCryptoObject(encrypt(),iv()), mCancellationSignal, 0, new FingerprintManager.AuthenticationCallback() {
             @Override
             public void onAuthenticationError(int errorCode, CharSequence errString) {
                 super.onAuthenticationError(errorCode, errString);
@@ -54,7 +47,8 @@ public class Fingerprint23 implements IFingerprint {
             @Override
             public void onAuthenticationSucceeded(FingerprintManager.AuthenticationResult result) {
                 super.onAuthenticationSucceeded(result);
-                listener.onSuccess();
+                authenticate(listener, result.getCryptoObject().getCipher());
+//                listener.onSuccess();
             }
 
             @Override
