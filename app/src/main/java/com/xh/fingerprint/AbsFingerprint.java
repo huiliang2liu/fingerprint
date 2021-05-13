@@ -7,9 +7,7 @@ import android.os.Build;
 import android.util.Base64;
 import android.util.Log;
 
-import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
 
 @TargetApi(Build.VERSION_CODES.M)
 public abstract class AbsFingerprint implements IFingerprint {
