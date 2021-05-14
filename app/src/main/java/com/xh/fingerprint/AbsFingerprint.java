@@ -23,7 +23,7 @@ public abstract class AbsFingerprint implements IFingerprint {
     }
 
     @Override
-    public final boolean isHardwareDetected() {
+    public  boolean isHardwareDetected() {
         return mManager == null ? false : mManager.isHardwareDetected() && mManager.hasEnrolledFingerprints();
     }
 

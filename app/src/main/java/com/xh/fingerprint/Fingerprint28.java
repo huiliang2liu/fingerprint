@@ -3,6 +3,7 @@ package com.xh.fingerprint;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.pm.PackageManager;
 import android.hardware.biometrics.BiometricPrompt;
 import android.hardware.fingerprint.FingerprintManager;
 import android.os.Build;
@@ -17,6 +18,7 @@ public class Fingerprint28 extends AbsFingerprint {
 
     Fingerprint28(Context context) {
         super(context);
+
         if (!isHardwareDetected())
             return;
         mBiometricPrompt = new BiometricPrompt.Builder(context)
@@ -29,6 +31,11 @@ public class Fingerprint28 extends AbsFingerprint {
                     }
                 }).build();
         mCancellationSignal = new CancellationSignal();
+    }
+
+    @Override
+    public boolean isHardwareDetected() {
+        return mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_FINGERPRINT);
     }
 
     @Override
